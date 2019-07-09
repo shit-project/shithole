@@ -1,0 +1,2 @@
+# shithole
+shithole core
