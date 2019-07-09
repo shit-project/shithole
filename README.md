@@ -1,2 +1,3 @@
-# shithole
-shithole core
+# SHITHOLE
+
+ShitHole Core
