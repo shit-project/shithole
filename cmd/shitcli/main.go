@@ -13,6 +13,7 @@ import (
 	bankcmd "github.com/cosmos/cosmos-sdk/x/bank/client/cli"
 
 	app "github.com/shit-project/shithole"
+	shittypes "github.com/shit-project/shithole/types"
 
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
@@ -32,9 +33,9 @@ func main() {
 
 	// Read in the configuration file for the sdk
 	config := sdk.GetConfig()
-	config.SetBech32PrefixForAccount(sdk.Bech32PrefixAccAddr, sdk.Bech32PrefixAccPub)
-	config.SetBech32PrefixForValidator(sdk.Bech32PrefixValAddr, sdk.Bech32PrefixValPub)
-	config.SetBech32PrefixForConsensusNode(sdk.Bech32PrefixConsAddr, sdk.Bech32PrefixConsPub)
+	config.SetBech32PrefixForAccount(shittypes.Bech32PrefixAccAddr, shittypes.Bech32PrefixAccPub)
+	config.SetBech32PrefixForValidator(shittypes.Bech32PrefixValAddr, shittypes.Bech32PrefixValPub)
+	config.SetBech32PrefixForConsensusNode(shittypes.Bech32PrefixConsAddr, shittypes.Bech32PrefixConsPub)
 	config.Seal()
 
 	rootCmd := &cobra.Command{
@@ -61,7 +62,7 @@ func main() {
 		client.LineBreak,
 	)
 
-	executor := cli.PrepareMainCmd(rootCmd, "NS", app.DefaultCLIHome)
+	executor := cli.PrepareMainCmd(rootCmd, "Shit", app.DefaultCLIHome)
 	err := executor.Execute()
 	if err != nil {
 		panic(err)
@@ -140,3 +141,4 @@ func initConfig(cmd *cobra.Command) error {
 		return err
 	}
 	return viper.BindPFlag(cli.OutputFlag, cmd.PersistentFlags().Lookup(cli.OutputFlag))
+}
