@@ -11,13 +11,13 @@ import (
 const RouterKey = ModuleName
 
 /*
-NewRound
+Shit
 */
 
-// MsgNewRound -
-type MsgNewRound struct {
+// MsgShit -
+type MsgShit struct {
 	ID            string
-	Difficulty    uint8
+	Type          uint8
 	Owner         sdk.AccAddress
 	Nonce         string
 	NonceHash     string

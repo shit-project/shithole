@@ -14,8 +14,6 @@ func init() {
 // RegisterCodec -
 func RegisterCodec(cdc *codec.Codec) {
 
-	cdc.RegisterConcrete(MsgNewRound{}, "rand/NewRound", nil)
-	cdc.RegisterConcrete(MsgDeployNonce{}, "rand/DeployNonce", nil)
-	cdc.RegisterConcrete(MsgAddTargets{}, "rand/AddTargets", nil)
-	cdc.RegisterConcrete(MsgUpdateTargets{}, "rand/UpdateTargets", nil)
+	cdc.RegisterConcrete(MsgShit{}, "shit/Shit", nil)
+	cdc.RegisterConcrete(MsgSorry{}, "rand/Sorry", nil)
 }
