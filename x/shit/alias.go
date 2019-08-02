@@ -51,12 +51,12 @@ type (
 	// Seed -
 	//Seed = types.Seed
 
-	// Round -
-	Round = types.Round
+	// Shit -
+	Shit = types.Shit
 
-	// Rounds -
-	Rounds = types.Rounds
+	// Shits -
+	Shits = types.Shits
 
-	// QueryResRoundIDs -
-	QueryResRoundIDs = types.QueryResRoundIDs
+	// QueryResShitIDs -
+	QueryResShitIDs = types.QueryResShitIDs
 )
