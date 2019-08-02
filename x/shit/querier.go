@@ -1,76 +1,84 @@
-package shit
+package rand
 
 import (
 	"github.com/cosmos/cosmos-sdk/codec"
-
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	abci "github.com/tendermint/tendermint/abci/types"
 )
 
-// query endpoints supported by the nameservice Querier
+// Query endpoints
 const (
-	QueryResolve = "resolve"
-	QueryWhois   = "whois"
-	QueryNames   = "names"
+	QuerySeedInfo  = "seed"
+	QueryRoundInfo = "round"
+	QueryRoundIDs  = "round_ids"
 )
 
-// NewQuerier is the module level router for state queries
+// NewQuerier -
 func NewQuerier(keeper Keeper) sdk.Querier {
 	return func(ctx sdk.Context, path []string, req abci.RequestQuery) (res []byte, err sdk.Error) {
+
 		switch path[0] {
-		case QueryResolve:
-			return queryResolve(ctx, path[1:], req, keeper)
-		case QueryWhois:
-			return queryWhois(ctx, path[1:], req, keeper)
-		case QueryNames:
-			return queryNames(ctx, req, keeper)
+		//case QuerySeedInfo:
+		//	return querySeedInfo(ctx, path[1:], req, keeper)
+
+		case QueryRoundInfo:
+			return queryRoundInfo(ctx, path[1:], req, keeper)
+
+		case QueryRoundIDs:
+			return queryRoundIDs(ctx, req, keeper)
+
 		default:
-			return nil, sdk.ErrUnknownRequest("unknown nameservice query endpoint")
+			return nil, sdk.ErrUnknownRequest("Unknown shit query endpoint")
 		}
 	}
 }
 
-// nolint: unparam
-func queryResolve(ctx sdk.Context, path []string, req abci.RequestQuery, keeper Keeper) ([]byte, sdk.Error) {
-	value := keeper.ResolveName(ctx, path[0])
+/*
+// querySeedInfo -
+func querySeedInfo(ctx sdk.Context, path []string, req abci.RequestQuery, keeper Keeper) (res []byte, err sdk.Error) {
+	height := path[0]
 
-	if value == "" {
-		return []byte{}, sdk.ErrUnknownRequest("could not resolve name")
+	seed := keeper.GetSeed(ctx, height)
+
+	bz, err2 := codec.MarshalJSONIndent(keeper.cdc, seed)
+	if err2 != nil {
+		panic("Cannot marshal JSON")
 	}
 
-	res, err := codec.MarshalJSONIndent(keeper.cdc, QueryResResolve{value})
-	if err != nil {
-		panic("could not marshal result to JSON")
+	return bz, nil
+}
+*/
+
+// queryRoundInfo -
+func queryRoundInfo(ctx sdk.Context, path []string, req abci.RequestQuery, keeper Keeper) (res []byte, err sdk.Error) {
+	id := path[0]
+
+	round := keeper.GetRound(ctx, id)
+
+	bz, err2 := codec.MarshalJSONIndent(keeper.cdc, round)
+	if err2 != nil {
+		panic("Cannot marshal JSON")
 	}
 
-	return res, nil
+	return bz, nil
 }
 
-// nolint: unparam
-func queryWhois(ctx sdk.Context, path []string, req abci.RequestQuery, keeper Keeper) ([]byte, sdk.Error) {
-	whois := keeper.GetWhois(ctx, path[0])
+// queryRoundIDs -
+func queryRoundIDs(ctx sdk.Context, req abci.RequestQuery, keeper Keeper) (res []byte, err sdk.Error) {
+	var roundIDs QueryResRoundIDs
 
-	res, err := codec.MarshalJSONIndent(keeper.cdc, whois)
-	if err != nil {
-		panic("could not marshal result to JSON")
-	}
-
-	return res, nil
-}
-
-func queryNames(ctx sdk.Context, req abci.RequestQuery, keeper Keeper) ([]byte, sdk.Error) {
-	var namesList QueryResNames
-
-	iterator := keeper.GetNamesIterator(ctx)
+	iterator := keeper.GetIDsIterator(ctx)
 
 	for ; iterator.Valid(); iterator.Next() {
-		namesList = append(namesList, string(iterator.Key()))
+		id := string(iterator.Key())
+		roundIDs = append(roundIDs, id)
 	}
 
-	res, err := codec.MarshalJSONIndent(keeper.cdc, namesList)
-	if err != nil {
-		panic("could not marshal result to JSON")
+	bz, err2 := codec.MarshalJSONIndent(keeper.cdc, roundIDs)
+	if err2 != nil {
+		panic("Cannot marshal JSON.")
 	}
 
-	return res, nil
+	return bz, nil
+
 }

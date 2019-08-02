@@ -3,91 +3,68 @@ package rest
 import (
 	"fmt"
 	"net/http"
+	"time"
+
+	"github.com/gorilla/mux"
 
 	"github.com/cosmos/cosmos-sdk/client/context"
-
-	"github.com/shit-project/shithole/x/shit/types"
-
+	//"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/rest"
 	"github.com/cosmos/cosmos-sdk/x/auth/client/utils"
-
-	"github.com/gorilla/mux"
+	"github.com/shit-project/shithole/x/shit/types"
 )
 
 const (
-	restName = "shit"
+	restRound = "round"
 )
 
-// RegisterRoutes - Central function to define routes that get registered by the main application
+// RegisterRoutes -
 func RegisterRoutes(cliCtx context.CLIContext, r *mux.Router, storeName string) {
-	r.HandleFunc(fmt.Sprintf("/%s/names", storeName), namesHandler(cliCtx, storeName)).Methods("GET")
-	r.HandleFunc(fmt.Sprintf("/%s/names", storeName), buyNameHandler(cliCtx)).Methods("POST")
-	r.HandleFunc(fmt.Sprintf("/%s/names", storeName), setNameHandler(cliCtx)).Methods("PUT")
-	r.HandleFunc(fmt.Sprintf("/%s/names/{%s}", storeName, restName), resolveNameHandler(cliCtx, storeName)).Methods("GET")
-	r.HandleFunc(fmt.Sprintf("/%s/names/{%s}/whois", storeName, restName), whoIsHandler(cliCtx, storeName)).Methods("GET")
+	r.HandleFunc(fmt.Sprintf("/%s/rounds", storeName), newRoundHandler(cliCtx)).Methods("POST")
+	r.HandleFunc(fmt.Sprintf("/%s/rounds", storeName), addTargetsHandler(cliCtx)).Methods("PUT")
+	r.HandleFunc(fmt.Sprintf("/%s/rounds", storeName), deployNonceHandler(cliCtx)).Methods("PUT")
+	r.HandleFunc(fmt.Sprintf("/%s/rounds", storeName), updateTargetsHandler(cliCtx)).Methods("PUT")
+	r.HandleFunc(fmt.Sprintf("/%s/rounds/{%s}/round", storeName, restRound), roundHandler(cliCtx, storeName)).Methods("GET")
+
 }
 
-// --------------------------------------------------------------------------------------
-// Tx Handler
-
-type buyNameReq struct {
-	BaseReq rest.BaseReq `json:"base_req"`
-	Name    string       `json:"name"`
-	Amount  string       `json:"amount"`
-	Buyer   string       `json:"buyer"`
-}
-
-func buyNameHandler(cliCtx context.CLIContext) http.HandlerFunc {
+// Query Handler(s)
+// roundHandler -
+func roundHandler(cliCtx context.CLIContext, storeName string) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		var req buyNameReq
+		//vars := mux.Vars(r)
+		//paramType := vars[restRound]
 
-		if !rest.ReadRESTReq(w, r, cliCtx.Codec, &req) {
-			rest.WriteErrorResponse(w, http.StatusBadRequest, "failed to parse request")
-			return
-		}
-
-		baseReq := req.BaseReq.Sanitize()
-		if !baseReq.ValidateBasic(w) {
-			return
-		}
-
-		addr, err := sdk.AccAddressFromBech32(req.Buyer)
+		res, _, err := cliCtx.QueryWithData(fmt.Sprintf("custom/%s/rounds", storeName), nil)
 		if err != nil {
-			rest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
+			rest.WriteErrorResponse(w, http.StatusNotFound, err.Error())
 			return
 		}
 
-		coins, err := sdk.ParseCoins(req.Amount)
-		if err != nil {
-			rest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
-			return
-		}
-
-		// create the message
-		msg := types.NewMsgBuyName(req.Name, coins, addr)
-		err = msg.ValidateBasic()
-		if err != nil {
-			rest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
-			return
-		}
-
-		utils.WriteGenerateStdTxResponse(w, cliCtx, baseReq, []sdk.Msg{msg})
+		rest.PostProcessResponse(w, cliCtx, res)
 	}
 }
 
-type setNameReq struct {
-	BaseReq rest.BaseReq `json:"base_req"`
-	Name    string       `json:"name"`
-	Value   string       `json:"value"`
-	Owner   string       `json:"owner"`
+// TX Handlers
+// newRoundReq -
+type newRoundReq struct {
+	BaseReq       rest.BaseReq `json:"base_req"`
+	Difficulty    uint8        `json:"difficulty"`
+	NonceHash     string       `json:"nonce_hash"`
+	ID            string       `json:"id"`
+	Owner         string       `json:"owner"`
+	Targets       []string     `json:"targets"`
+	ScheduledTime time.Time    `jsong:"scheduled_time"`
 }
 
-func setNameHandler(cliCtx context.CLIContext) http.HandlerFunc {
+// newRoundHandler -
+func newRoundHandler(cliCtx context.CLIContext) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		var req setNameReq
+		var req newRoundReq
+
 		if !rest.ReadRESTReq(w, r, cliCtx.Codec, &req) {
-			rest.WriteErrorResponse(w, http.StatusBadRequest, "failed to parse request")
+			rest.WriteErrorResponse(w, http.StatusBadRequest, "Cannot read request")
 			return
 		}
 
@@ -102,8 +79,7 @@ func setNameHandler(cliCtx context.CLIContext) http.HandlerFunc {
 			return
 		}
 
-		// create the message
-		msg := types.NewMsgSetName(req.Name, req.Value, addr)
+		msg := types.NewMsgNewRound(req.ID, req.Difficulty, addr, req.NonceHash, req.Targets, req.ScheduledTime)
 		err = msg.ValidateBasic()
 		if err != nil {
 			rest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
@@ -111,49 +87,133 @@ func setNameHandler(cliCtx context.CLIContext) http.HandlerFunc {
 		}
 
 		utils.WriteGenerateStdTxResponse(w, cliCtx, baseReq, []sdk.Msg{msg})
+
 	}
 }
 
-//--------------------------------------------------------------------------------------
-// Query Handlers
+// deployNonceReq -
+type deployNonceReq struct {
+	BaseReq rest.BaseReq `json:"base_req"`
+	Nonce   string       `json:"nonce"`
+	ID      string       `json:"id"`
+	Owner   string       `json:"owner"`
+}
 
-func resolveNameHandler(cliCtx context.CLIContext, storeName string) http.HandlerFunc {
+// deployNonceHandler -
+func deployNonceHandler(cliCtx context.CLIContext) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		vars := mux.Vars(r)
-		paramType := vars[restName]
+		var req deployNonceReq
 
-		res, _, err := cliCtx.QueryWithData(fmt.Sprintf("custom/%s/resolve/%s", storeName, paramType), nil)
-		if err != nil {
-			rest.WriteErrorResponse(w, http.StatusNotFound, err.Error())
+		if !rest.ReadRESTReq(w, r, cliCtx.Codec, &req) {
+			rest.WriteErrorResponse(w, http.StatusBadRequest, "Cannot read request")
 			return
 		}
 
-		rest.PostProcessResponse(w, cliCtx, res)
+		baseReq := req.BaseReq.Sanitize()
+		if !baseReq.ValidateBasic(w) {
+			return
+		}
+
+		addr, err := sdk.AccAddressFromBech32(req.Owner)
+		if err != nil {
+			rest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
+			return
+		}
+
+		msg := types.NewMsgDeployNonce(req.ID, addr, req.Nonce)
+
+		err = msg.ValidateBasic()
+		if err != nil {
+			rest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
+			return
+		}
+
+		utils.WriteGenerateStdTxResponse(w, cliCtx, baseReq, []sdk.Msg{msg})
+		//clientrest.CompleteAndBroadcastTxREST(w, cliCtx, baseReq, []sdk.Msg{msg}, cdc)
+
 	}
 }
 
-func whoIsHandler(cliCtx context.CLIContext, storeName string) http.HandlerFunc {
-	return func(w http.ResponseWriter, r *http.Request) {
-		vars := mux.Vars(r)
-		paramType := vars[restName]
+// addTargetsReq -
+type addTargetsReq struct {
+	BaseReq rest.BaseReq `json:"base_req"`
+	Targets []string     `json:"targets"`
+	ID      string       `json:"id"`
+	Owner   string       `json:"owner"`
+}
 
-		res, _, err := cliCtx.QueryWithData(fmt.Sprintf("custom/%s/whois/%s", storeName, paramType), nil)
-		if err != nil {
-			rest.WriteErrorResponse(w, http.StatusNotFound, err.Error())
+// addTargetsHandler -
+func addTargetsHandler(cliCtx context.CLIContext) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		var req addTargetsReq
+
+		if !rest.ReadRESTReq(w, r, cliCtx.Codec, &req) {
+			rest.WriteErrorResponse(w, http.StatusBadRequest, "Cannot read request")
 			return
 		}
 
-		rest.PostProcessResponse(w, cliCtx, res)
+		baseReq := req.BaseReq.Sanitize()
+		if !baseReq.ValidateBasic(w) {
+			return
+		}
+
+		addr, err := sdk.AccAddressFromBech32(req.Owner)
+		if err != nil {
+			rest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
+			return
+		}
+
+		msg := types.NewMsgAddTargets(req.ID, addr, req.Targets)
+
+		err = msg.ValidateBasic()
+		if err != nil {
+			rest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
+			return
+		}
+
+		utils.WriteGenerateStdTxResponse(w, cliCtx, baseReq, []sdk.Msg{msg})
+
 	}
 }
 
-func namesHandler(cliCtx context.CLIContext, storeName string) http.HandlerFunc {
+// updateTargetsReq -
+type updateTargetsReq struct {
+	BaseReq rest.BaseReq `json:"base_req"`
+	Targets []string     `json:"targets"`
+	ID      string       `json:"id"`
+	Owner   string       `json:"owner"`
+}
+
+// updateTargetsHandler -
+func updateTargetsHandler(cliCtx context.CLIContext) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		res, _, err := cliCtx.QueryWithData(fmt.Sprintf("custom/%s/names", storeName), nil)
-		if err != nil {
-			rest.WriteErrorResponse(w, http.StatusNotFound, err.Error())
+		var req updateTargetsReq
+
+		if !rest.ReadRESTReq(w, r, cliCtx.Codec, &req) {
+			rest.WriteErrorResponse(w, http.StatusBadRequest, "Cannot read request")
 			return
 		}
-		rest.PostProcessResponse(w, cliCtx, res)
+
+		baseReq := req.BaseReq.Sanitize()
+		if !baseReq.ValidateBasic(w) {
+			return
+		}
+
+		addr, err := sdk.AccAddressFromBech32(req.Owner)
+		if err != nil {
+			rest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
+			return
+		}
+
+		msg := types.NewMsgUpdateTargets(req.ID, addr, req.Targets)
+
+		err = msg.ValidateBasic()
+		if err != nil {
+			rest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
+			return
+		}
+
+		utils.WriteGenerateStdTxResponse(w, cliCtx, baseReq, []sdk.Msg{msg})
+
 	}
 }

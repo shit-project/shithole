@@ -1,56 +1,66 @@
-package shit
+package rand
 
 import (
-	"fmt"
-
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	abci "github.com/tendermint/tendermint/abci/types"
+	//abci "github.com/tendermint/tendermint/abci/types"
 )
 
+// GenesisState -
 type GenesisState struct {
-	WhoisRecords []Whois `json:"whois_records"`
+	StartingBlockHeight uint64 `json:"starting_block_height"`
+	Rounds              Rounds `json:"rounds"`
 }
 
-func NewGenesisState(whoIsRecords []Whois) GenesisState {
-	return GenesisState{WhoisRecords: nil}
-}
-
-func ValidateGenesis(data GenesisState) error {
-	for _, record := range data.WhoisRecords {
-		if record.Owner == nil {
-			return fmt.Errorf("Invalid WhoisRecord: Value: %s. Error: Missing Owner", record.Value)
-		}
-		if record.Value == "" {
-			return fmt.Errorf("Invalid WhoisRecord: Owner: %s. Error: Missing Value", record.Owner)
-		}
-		if record.Price == nil {
-			return fmt.Errorf("Invalid WhoisRecord: Value: %s. Error: Missing Price", record.Value)
-		}
+// NewGenesisState -
+func NewGenesisState(startingBlockHeight uint64) GenesisState {
+	return GenesisState{
+		StartingBlockHeight: 1,
 	}
+}
+
+// ValidateGenesis -
+func ValidateGenesis(data GenesisState) error {
 	return nil
 }
 
+// DefaultGenesisState -
 func DefaultGenesisState() GenesisState {
 	return GenesisState{
-		WhoisRecords: []Whois{},
+		StartingBlockHeight: 1,
 	}
 }
 
+// Checks whether 2 GenesisState structs are equivalent.
+/*func (data GenesisState) Equal(data2 GenesisState) bool {
+	b1 := MsgCdc.MustMarshalBinaryBare(data)
+	b2 := MsgCdc.MustMarshalBinaryBare(data2)
+	return bytes.Equal(b1, b2)
+}*/
+
+// Returns if a GenesisState is empty or has data in it
+/*func (data GenesisState) IsEmpty() bool {
+	emptyGenState := GenesisState{}
+	return data.Equal(emptyGenState)
+}*/
+
+// InitGenesis -
 func InitGenesis(ctx sdk.Context, keeper Keeper, data GenesisState) []abci.ValidatorUpdate {
-	for _, record := range data.WhoisRecords {
-		keeper.SetWhois(ctx, record.Value, record)
-	}
+	/*for _, record := range data.Rounds {
+		keeper.SetRound(ctx, record.ID, record)
+	}*/
 	return []abci.ValidatorUpdate{}
 }
 
+// ExportGenesis returns a GenesisState for a given context and keeper.
 func ExportGenesis(ctx sdk.Context, k Keeper) GenesisState {
-	var records []Whois
-	iterator := k.GetNamesIterator(ctx)
+	/*var records []Round
+	iterator := k.GetIDsIterator(ctx)
 	for ; iterator.Valid(); iterator.Next() {
-		name := string(iterator.Key())
-		var whois Whois
-		whois = k.GetWhois(ctx, name)
-		records = append(records, whois)
-	}
-	return GenesisState{WhoisRecords: records}
+		id := string(iterator.Key())
+		var round Round
+		round = k.GetRound(ctx, id)
+		records = append(records, round)
+	}*/
+	return GenesisState{StartingBlockHeight: 1}
 }

@@ -1,9 +1,11 @@
 package assets
 
-// MicroShitDenom -
 const (
+	// MicroShitDenom -
 	MicroShitDenom = "ushit"
-	MicroUnit      = int64(1e6)
+
+	// MicroUnit -
+	MicroUnit = int64(1e6)
 )
 
 // IsValidDenom -

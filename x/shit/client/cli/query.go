@@ -3,95 +3,74 @@ package cli
 import (
 	"fmt"
 
+	"github.com/spf13/cobra"
+
+	"github.com/shit-project/shithole/x/shit/types"
+
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/client/context"
 	"github.com/cosmos/cosmos-sdk/codec"
-
-	"github.com/shit-project/shithole/x/nameservice/types"
-
-	"github.com/spf13/cobra"
 )
 
+// GetQueryCmd -
 func GetQueryCmd(storeKey string, cdc *codec.Codec) *cobra.Command {
-	nameserviceQueryCmd := &cobra.Command{
+	randQueryCmd := &cobra.Command{
 		Use:                        types.ModuleName,
-		Short:                      "Querying commands for the shithole module",
+		Short:                      "Querying commands for the shit module",
 		DisableFlagParsing:         true,
 		SuggestionsMinimumDistance: 2,
 		RunE:                       client.ValidateCmd,
 	}
-	nameserviceQueryCmd.AddCommand(client.GetCommands(
-		GetCmdResolveName(storeKey, cdc),
-		GetCmdWhois(storeKey, cdc),
-		GetCmdNames(storeKey, cdc),
+	randQueryCmd.AddCommand(client.GetCommands(
+		GetCmdRoundInfo(cdc),
+		GetCmdRoundIDs(cdc),
 	)...)
-	return nameserviceQueryCmd
+	return randQueryCmd
 }
 
-// GetCmdResolveName queries information about a name
-func GetCmdResolveName(queryRoute string, cdc *codec.Codec) *cobra.Command {
+
+// GetCmdRoundInfo -
+func GetCmdRoundInfo(cdc *codec.Codec) *cobra.Command {
 	return &cobra.Command{
-		Use:   "resolve [name]",
-		Short: "resolve name",
+		Use:   "round_info [id]",
+		Short: "get information of certain round",
 		Args:  cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			cliCtx := context.NewCLIContext().WithCodec(cdc)
-			name := args[0]
+			id := args[0]
 
-			res, _, err := cliCtx.QueryWithData(fmt.Sprintf("custom/%s/resolve/%s", queryRoute, name), nil)
+			res, _, err := cliCtx.QueryWithData(fmt.Sprintf("custom/%s/round/%s", types.QuerierRoute, id), nil)
 			if err != nil {
-				fmt.Printf("could not resolve name - %s \n", name)
+				//fmt.Printf("Cannot receive round %s data\nError : %s \nqueryRoute : %s\n", string(id), err.Error(), queryRoute)
 				return nil
 			}
 
-			var out types.QueryResResolve
+			var out types.Round
 			cdc.MustUnmarshalJSON(res, &out)
 			return cliCtx.PrintOutput(out)
 		},
 	}
 }
 
-// GetCmdWhois queries information about a domain
-func GetCmdWhois(queryRoute string, cdc *codec.Codec) *cobra.Command {
+// GetCmdRoundIDs -
+func GetCmdRoundIDs(cdc *codec.Codec) *cobra.Command {
 	return &cobra.Command{
-		Use:   "whois [name]",
-		Short: "Query whois info of name",
-		Args:  cobra.ExactArgs(1),
-		RunE: func(cmd *cobra.Command, args []string) error {
-			cliCtx := context.NewCLIContext().WithCodec(cdc)
-			name := args[0]
-
-			res, _, err := cliCtx.QueryWithData(fmt.Sprintf("custom/%s/whois/%s", queryRoute, name), nil)
-			if err != nil {
-				fmt.Printf("could not resolve whois - %s \n", name)
-				return nil
-			}
-
-			var out types.Whois
-			cdc.MustUnmarshalJSON(res, &out)
-			return cliCtx.PrintOutput(out)
-		},
-	}
-}
-
-// GetCmdNames queries a list of all names
-func GetCmdNames(queryRoute string, cdc *codec.Codec) *cobra.Command {
-	return &cobra.Command{
-		Use:   "names",
-		Short: "names",
-		// Args:  cobra.ExactArgs(1),
+		Use:   "round_ids",
+		Short: "Get round IDs",
 		RunE: func(cmd *cobra.Command, args []string) error {
 			cliCtx := context.NewCLIContext().WithCodec(cdc)
 
-			res, _, err := cliCtx.QueryWithData(fmt.Sprintf("custom/%s/names", queryRoute), nil)
+			res, _, err := cliCtx.QueryWithData(fmt.Sprintf("custom/%s/round_ids", types.QuerierRoute), nil)
 			if err != nil {
-				fmt.Printf("could not get query names\n")
+				fmt.Printf("Cannot receive IDs .\n")
 				return nil
 			}
 
-			var out types.QueryResNames
+			var out types.QueryResRoundIDs
 			cdc.MustUnmarshalJSON(res, &out)
+
 			return cliCtx.PrintOutput(out)
+
 		},
 	}
 }

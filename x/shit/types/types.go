@@ -3,30 +3,57 @@ package types
 import (
 	"fmt"
 	"strings"
+	"time"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
-// Initial Starting Price for a name that was never previously owned
-var MinNamePrice = sdk.Coins{sdk.NewInt64Coin("nametoken", 1)}
-
-// Whois is a struct that contains all the metadata of a name
-type Whois struct {
-	Value string         `json:"value"`
-	Owner sdk.AccAddress `json:"owner"`
-	Price sdk.Coins      `json:"price"`
+/*
+// Seed -
+type Seed struct {
+	Height           string   `json:"height"`
+	SeedHashes       []string `json:"seed_hashes"`
+	SealedSeedHashes []string `json:"sealed_seed_hashes"`
+	ValidatorPubKey  string   `jsong:"validator_pub_key"`
 }
 
-// Returns a new Whois with the minprice as the price
-func NewWhois() Whois {
-	return Whois{
-		Price: MinNamePrice,
-	}
+func (s Seed) String() string {
+	return strings.TrimSpace(fmt.Sprintf(`Height: %s
+	SeedHashes: %v
+	SealedSeedHashes: %v
+	ValidatorPubKey: %s
+	`, s.Height, s.SeedHashes, s.SealedSeedHashes, s.ValidatorPubKey))
+}
+*/
+
+// Round -
+type Round struct {
+	ID            string         `json:"id"`
+	Difficulty    uint8          `json:"difficulty"`
+	Owner         sdk.AccAddress `json:"owner"`
+	Nonce         string         `json:"nonce"`
+	NonceHash     string         `json:"nonce_hash"`
+	Targets       []string       `json:"targets"`
+	ScheduledTime time.Time      `json:"scheduled_time"`
 }
 
-// implement fmt.Stringer
-func (w Whois) String() string {
+func (r Round) String() string {
+	timeString := r.ScheduledTime.Local()
 	return strings.TrimSpace(fmt.Sprintf(`Owner: %s
-Value: %s
-Price: %s`, w.Owner, w.Value, w.Price))
+Difficulty: %d
+Nonce: %s
+NonceHash: %s
+Targets: %v
+ScheduledTime: %s
+`, r.Owner, r.Difficulty, r.Nonce, r.NonceHash, r.Targets, timeString.Format("2006-01-02 15:04:05 +0900")))
 }
+
+// QueryResRoundIDs -
+type QueryResRoundIDs []string
+
+func (n QueryResRoundIDs) String() string {
+	return strings.Join(n[:], "\n")
+}
+
+// Rounds -
+type Rounds []*Round

@@ -1,9 +1,12 @@
 package types
 
 const (
-	// module name
+	// ModuleName -
 	ModuleName = "shit"
 
-	// StoreKey to be used when creating the KVStore
+	// StoreKey -
 	StoreKey = ModuleName
+
+	// QuerierRoute -
+	QuerierRoute = ModuleName
 )

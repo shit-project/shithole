@@ -1,4 +1,4 @@
-package shit
+package rand
 
 import (
 	"fmt"
@@ -6,47 +6,111 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
-// NewHandler returns a handler for "nameservice" type messages.
+// NewHandler -
 func NewHandler(keeper Keeper) sdk.Handler {
 	return func(ctx sdk.Context, msg sdk.Msg) sdk.Result {
 		switch msg := msg.(type) {
-		case MsgSetName:
-			return handleMsgSetName(ctx, keeper, msg)
-		case MsgBuyName:
-			return handleMsgBuyName(ctx, keeper, msg)
+
+		case MsgNewRound:
+			return handleMsgNewRound(ctx, keeper, msg)
+
+		case MsgDeployNonce:
+			return handleMsgDeployNonce(ctx, keeper, msg)
+
+		case MsgAddTargets:
+			return handleMsgAddTargets(ctx, keeper, msg)
+
+		case MsgUpdateTargets:
+			return handleMsgUpdateTargets(ctx, keeper, msg)
+
 		default:
-			errMsg := fmt.Sprintf("Unrecognized nameservice Msg type: %v", msg.Type())
+			errMsg := fmt.Sprintf("Unknown rand Msg type: %v", msg.Type())
 			return sdk.ErrUnknownRequest(errMsg).Result()
 		}
 	}
 }
 
-// Handle a message to set name
-func handleMsgSetName(ctx sdk.Context, keeper Keeper, msg MsgSetName) sdk.Result {
-	if !msg.Owner.Equals(keeper.GetOwner(ctx, msg.Name)) { // Checks if the the msg sender is the same as the current owner
-		return sdk.ErrUnauthorized("Incorrect Owner").Result() // If not, throw an error
+// handleMsgNewRound -
+func handleMsgNewRound(ctx sdk.Context, keeper Keeper, msg MsgNewRound) sdk.Result {
+	//if !msg.Owner.Equals(keeper.GetOwner(ctx, msg.ID)) {
+	//return sdk.ErrUnauthorized("Owner mismatch").Result()
+	//}
+
+	if msg.Owner.Empty() {
+		return sdk.ErrUnauthorized("Owner is empty").Result()
 	}
-	keeper.SetName(ctx, msg.Name, msg.Value) // If so, set the name to the value specified in the msg.
-	return sdk.Result{}                      // return
+
+	keeper.SetRound(ctx, msg.ID, Round{Difficulty: msg.Difficulty, Owner: msg.Owner, Nonce: msg.Nonce, NonceHash: msg.NonceHash, Targets: msg.Targets, ScheduledTime: msg.ScheduledTime})
+	return sdk.Result{}
 }
 
-// Handle a message to buy name
-func handleMsgBuyName(ctx sdk.Context, keeper Keeper, msg MsgBuyName) sdk.Result {
-	if keeper.GetPrice(ctx, msg.Name).IsAllGT(msg.Bid) { // Checks if the the bid price is greater than the price paid by the current owner
-		return sdk.ErrInsufficientCoins("Bid not high enough").Result() // If not, throw an error
+// handleMsgDepoloyNonce -
+func handleMsgDeployNonce(ctx sdk.Context, keeper Keeper, msg MsgDeployNonce) sdk.Result {
+	if !msg.Owner.Equals(keeper.GetOwner(ctx, msg.ID)) {
+		return sdk.ErrUnauthorized("Owner mismatch").Result()
 	}
-	if keeper.HasOwner(ctx, msg.Name) {
-		err := keeper.coinKeeper.SendCoins(ctx, msg.Buyer, keeper.GetOwner(ctx, msg.Name), msg.Bid)
-		if err != nil {
-			return sdk.ErrInsufficientCoins("Buyer does not have enough coins").Result()
+
+	keeper.SetNonce(ctx, msg.ID, msg.Nonce)
+	return sdk.Result{}
+}
+
+// handleMsgAddTargets -
+func handleMsgAddTargets(ctx sdk.Context, keeper Keeper, msg MsgAddTargets) sdk.Result {
+	if !msg.Owner.Equals(keeper.GetOwner(ctx, msg.ID)) {
+		return sdk.ErrUnauthorized("Owner mismatch").Result()
+	}
+
+	// 기존 Targets에 추가
+	// 현재 Target에 중복된 값을 넣을 수는 없음
+	// important ******
+	// 만약 중복 응모가 가능하게 하려면 이를 어떻게 처리할 것인가? 이것이 필요한가는 의문
+	newTargets := keeper.GetTargets(ctx, msg.ID)
+
+	for _, b := range msg.Targets {
+		exist := false
+		for _, n := range newTargets {
+			if n == b {
+				exist = true
+				break
+			}
 		}
-	} else {
-		_, err := keeper.coinKeeper.SubtractCoins(ctx, msg.Buyer, msg.Bid) // If so, deduct the Bid amount from the sender
-		if err != nil {
-			return sdk.ErrInsufficientCoins("Buyer does not have enough coins").Result()
+
+		if !exist {
+			newTargets = append(newTargets, b)
 		}
 	}
-	keeper.SetOwner(ctx, msg.Name, msg.Buyer)
-	keeper.SetPrice(ctx, msg.Name, msg.Bid)
+
+	keeper.SetTargets(ctx, msg.ID, newTargets)
+	return sdk.Result{}
+}
+
+// handleMsgRemoveTargets -
+func handleMsgUpdateTargets(ctx sdk.Context, keeper Keeper, msg MsgUpdateTargets) sdk.Result {
+	if !msg.Owner.Equals(keeper.GetOwner(ctx, msg.ID)) {
+		return sdk.ErrUnauthorized("Owner mismatch").Result()
+	}
+
+	// 기존 Targets에서 일치하는 것 삭제
+	//updateTargets := keeper.GetTargets(ctx, msg.ID)
+
+	/*
+		for i := 0; i < len(updateTargets); {
+			exist := false
+			for _, b := range msg.Targets {
+				if b == updateTargets[i] {
+					exist = true
+					break
+				}
+
+				if !exist {
+					i++
+				} else {
+					updateTargets = append(updateTargets[:i], updateTargets[i+1:]...)
+				}
+			}
+		}
+	*/
+
+	keeper.SetTargets(ctx, msg.ID, msg.Targets)
 	return sdk.Result{}
 }
