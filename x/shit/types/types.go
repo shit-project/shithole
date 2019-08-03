@@ -9,18 +9,20 @@ import (
 
 // Shit -
 type Shit struct {
-	ID         string           `json:"id"`
-	ShitType   uint8            `json:"shit_type"`
-	Informants []sdk.AccAddress `json:"informants"`
-	Comments   []string         `jsong:"comments"`
+	ID        string         `json:"id"`
+	ShitType  uint8          `json:"shit_type"`
+	Amount    uint64         `json:"amount"`
+	Informant sdk.AccAddress `json:"informant"`
+	Comment   string         `jsong:"comment"`
 }
 
 func (s Shit) String() string {
-	return strings.TrimSpace(fmt.Sprintf(`ID: %d
+	return strings.TrimSpace(fmt.Sprintf(`ID: %s
 ShitType: %d
-Informants: %v
-Comments: %v
-`, s.ID, s.ShitType, s.Informants, s.Comments))
+Amount: %d
+Informants: %s
+Comments: %s
+`, s.ID, s.ShitType, s.Amount, s.Informant, s.Comment))
 }
 
 // QueryResShitIDs -

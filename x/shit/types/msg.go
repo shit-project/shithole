@@ -17,15 +17,17 @@ Shit
 type MsgShit struct {
 	ID        string
 	ShitType  uint8
+	Amount    uint16
 	Informant sdk.AccAddress
 	Comment   string
 }
 
 // NewMsgShit -
-func NewMsgShit(id string, shitType uint8, informant sdk.AccAddress, comment string) MsgShit {
+func NewMsgShit(id string, shitType uint8, amount uint16, informant sdk.AccAddress, comment string) MsgShit {
 	return MsgShit{
 		ID:        id,
 		ShitType:  shitType,
+		Amount:    amount,
 		Informant: informant,
 		Comment:   comment,
 	}
@@ -49,6 +51,10 @@ func (msg MsgShit) ValidateBasic() sdk.Error {
 
 	if len(msg.ID) == 0 {
 		return sdk.ErrUnknownRequest("Must specify ID, ShitType.")
+	}
+
+	if msg.Amount < 100 {
+		return sdk.ErrUnknownRequest("Amount must be greater than 100.")
 	}
 
 	if msg.ShitType < 1 {
@@ -76,8 +82,8 @@ func (msg MsgShit) GetSigners() []sdk.AccAddress {
 Sorry
 */
 
-// MsgDeployNonce -
-type MsgDeployNonce struct {
+// Sorry -
+type Sorry struct {
 	ID    string
 	Owner sdk.AccAddress
 	Nonce string
