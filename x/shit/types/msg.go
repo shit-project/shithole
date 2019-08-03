@@ -32,37 +32,34 @@ func NewMsgShit(id string, shitType uint8, informant sdk.AccAddress, comment str
 }
 
 // Route -
-func (msg MsgNewRound) Route() string {
+func (msg MsgShit) Route() string {
 	return RouterKey
 }
 
 // Type -
-func (msg MsgNewRound) Type() string {
-	return "new_round"
+func (msg MsgShit) Type() string {
+	return "shit"
 }
 
 // ValidateBasic -
-func (msg MsgNewRound) ValidateBasic() sdk.Error {
-	if msg.Owner.Empty() {
-		return sdk.ErrInvalidAddress(msg.Owner.String())
+func (msg MsgShit) ValidateBasic() sdk.Error {
+	if msg.Informant.Empty() {
+		return sdk.ErrInvalidAddress(msg.Informant.String())
 	}
 
-	if len(msg.ID) == 0 || len(msg.NonceHash) == 0 {
-		return sdk.ErrUnknownRequest("Must specify ID, NonceHash.")
+	if len(msg.ID) == 0 {
+		return sdk.ErrUnknownRequest("Must specify ID, ShitType.")
 	}
 
-	// 그럴리는 없지만 ID hash 값이 중복되는 경우는 어떻게?
-	// important ****** to-do
-
-	if msg.Difficulty < 1 {
-		return sdk.ErrUnknownRequest("Difficulty must be greater than 0.")
+	if msg.ShitType < 1 {
+		return sdk.ErrUnknownRequest("ShitType must be greater than 0.")
 	}
 
 	return nil
 }
 
 // GetSignBytes -
-func (msg MsgNewRound) GetSignBytes() []byte {
+func (msg MsgShit) GetSignBytes() []byte {
 	b, err := json.Marshal(msg)
 	if err != nil {
 		panic(err)
@@ -71,12 +68,12 @@ func (msg MsgNewRound) GetSignBytes() []byte {
 }
 
 // GetSigners -
-func (msg MsgNewRound) GetSigners() []sdk.AccAddress {
-	return []sdk.AccAddress{msg.Owner}
+func (msg MsgShit) GetSigners() []sdk.AccAddress {
+	return []sdk.AccAddress{msg.Informant}
 }
 
 /*
-DeployNonce
+Sorry
 */
 
 // MsgDeployNonce -
