@@ -2,7 +2,6 @@ package types
 
 import (
 	"encoding/json"
-	"time"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
@@ -16,25 +15,19 @@ Shit
 
 // MsgShit -
 type MsgShit struct {
-	ID            string
-	Type          uint8
-	Owner         sdk.AccAddress
-	Nonce         string
-	NonceHash     string
-	Targets       []string
-	ScheduledTime time.Time
+	ID        string
+	ShitType  uint8
+	Informant sdk.AccAddress
+	Comment   string
 }
 
-// NewMsgNewRound -
-func NewMsgNewRound(id string, difficulty uint8, owner sdk.AccAddress, nonceHash string, targets []string, scheduledTime time.Time) MsgNewRound {
-	return MsgNewRound{
-		ID:            id,
-		Difficulty:    difficulty,
-		Owner:         owner,
-		Nonce:         "",
-		NonceHash:     nonceHash,
-		Targets:       targets,
-		ScheduledTime: scheduledTime,
+// NewMsgShit -
+func NewMsgShit(id string, shitType uint8, informant sdk.AccAddress, comment string) MsgShit {
+	return MsgShit{
+		ID:        id,
+		ShitType:  shitType,
+		Informant: informant,
+		Comment:   comment,
 	}
 }
 

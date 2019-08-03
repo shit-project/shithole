@@ -48,9 +48,6 @@ type (
 	// MsgUpdateTargets -
 	MsgUpdateTargets = types.MsgUpdateTargets
 
-	// Seed -
-	//Seed = types.Seed
-
 	// Shit -
 	Shit = types.Shit
 

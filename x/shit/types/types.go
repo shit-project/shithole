@@ -10,17 +10,17 @@ import (
 // Shit -
 type Shit struct {
 	ID         string           `json:"id"`
-	Type       uint8            `json:"Type"`
+	ShitType   uint8            `json:"shit_type"`
 	Informants []sdk.AccAddress `json:"informants"`
 	Comments   []string         `jsong:"comments"`
 }
 
 func (s Shit) String() string {
 	return strings.TrimSpace(fmt.Sprintf(`ID: %d
-Type: %d
+ShitType: %d
 Informants: %v
 Comments: %v
-`, s.ID, s.Type, s.Informants, s.Comments))
+`, s.ID, s.ShitType, s.Informants, s.Comments))
 }
 
 // QueryResShitIDs -
