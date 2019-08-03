@@ -79,22 +79,28 @@ func (msg MsgShit) GetSigners() []sdk.AccAddress {
 }
 
 /*
-Sorry
+MsgSorry
 */
 
-// Sorry -
-type Sorry struct {
-	ID    string
-	Owner sdk.AccAddress
-	Nonce string
+// MsgSorry -
+type MsgSorry struct {
+	ID        string
+	ShitType  uint8
+	Amount    uint16
+	Informant sdk.AccAddress
+	Opponent  sdk.AccAddress
+	Comment   string
 }
 
-// NewMsgDeployNonce -
-func NewMsgDeployNonce(id string, owner sdk.AccAddress, nonce string) MsgDeployNonce {
-	return MsgDeployNonce{
-		ID:    id,
-		Owner: owner,
-		Nonce: nonce,
+// NewMsgSorry -
+func NewMsgSorry(id string, owner sdk.AccAddress, nonce string) MsgSorry {
+	return MsgSorry{
+		ID:        id,
+		ShitType:  owner,
+		Amount:    nonce,
+		Informant: informant,
+		Opponent:  opponent,
+		Comment:   comment,
 	}
 }
 
